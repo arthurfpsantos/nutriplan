@@ -23,7 +23,7 @@ git commit -m "chore: inicializa repositorio com gitignore e editorconfig" | Out
 git checkout -b develop | Out-Null
 
 Commit-Feature "feature/calculos-corporais" "feat(core): calcula IMC, TMB, gasto diario e meta calorica" `
-    @("NutriPlan.sln", "src/NutriPlan.Core/Models", "src/NutriPlan.Core/Calculations/BodyCalculator.cs",
+    @("NutriPlan.slnx","src/NutriPlan.Core/Models", "src/NutriPlan.Core/Calculations/BodyCalculator.cs",
       "src/NutriPlan.Core/NutriPlan.Core.csproj", "tests/NutriPlan.Tests/NutriPlan.Tests.csproj",
       "tests/NutriPlan.Tests/BodyCalculatorTests.cs")
 
