@@ -5,7 +5,7 @@ namespace NutriPlan.Tests;
 
 public class BodyCalculatorRulesTests
 {
-    private static UserProfile ExampleProfile(Goal goal, double extraKcal = 0) => new()
+    private static UserProfile ExampleProfile(Goal goal, int extraKcal = 0) => new()
     {
         Name = "Exemplo",
         Sex = Sex.Male,
