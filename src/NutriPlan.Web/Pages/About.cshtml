@@ -4,61 +4,164 @@
     ViewData["Title"] = "Sobre";
 }
 
-<section class="page-head">
-    <div>
-        <p class="eyebrow">@Model.Team.Course</p>
+<div class="about-page">
+    <header>
+        @if (!string.IsNullOrWhiteSpace(Model.Team.Course))
+        {
+            <p class="eyebrow">@Model.Team.Course</p>
+        }
         <h1>Sobre o NutriPlan</h1>
-    </div>
-</section>
-
-<div class="about-grid">
-    <article class="card">
-        <h2>Problema</h2>
-        <p>
-            Excesso de peso e baixo peso são problemas de saúde comuns, e quem decide mudar o corpo costuma não saber
-            quantas calorias gasta por dia, como montar uma dieta que respeite essa meta e como manter a motivação.
-            Dietas genéricas da internet ignoram o perfil da pessoa.
+        <p class="lead">
+            O NutriPlan é um projeto acadêmico que usa estimativas calóricas e análise combinatória
+            para montar um cardápio de sete dias e acompanhar o peso.
         </p>
-        <h2>ODS</h2>
-        <p><strong>ODS 3 – Saúde e Bem-Estar:</strong> promove hábitos alimentares saudáveis e prevenção de doenças ligadas à obesidade e à má alimentação.</p>
-        <p><strong>ODS 2 – Fome Zero (secundária):</strong> usa alimentos comuns do dia a dia e uma tabela nutricional brasileira.</p>
-    </article>
+        <div class="actions about-actions">
+            <a class="btn" asp-page="/Index">Montar um plano</a>
+            <a class="btn btn-ghost" asp-page="/Foods">Consultar alimentos</a>
+        </div>
+    </header>
 
-    <article class="card">
-        <h2>Fórmulas</h2>
-        <ul class="formulas">
-            <li><strong>IMC</strong> = peso ÷ altura²</li>
-            <li><strong>TMB (homens)</strong> = 10×peso + 6,25×altura − 5×idade + 5</li>
-            <li><strong>TMB (mulheres)</strong> = 10×peso + 6,25×altura − 5×idade − 161</li>
-            <li><strong>Gasto diário</strong> = TMB × fator de atividade (1,2 a 1,9)</li>
-            <li><strong>Meta</strong> = gasto − 500 (emagrecer), + 500 (ganhar) ou igual (manter)</li>
-            <li><strong>Combinações</strong> C(n, k) = n! ÷ (k! × (n − k)!)</li>
-        </ul>
-        <p class="muted">Pisos de segurança: 1.500 kcal (homens) e 1.200 kcal (mulheres). Meta semanal de peso de 0,1 a 1 kg.</p>
-    </article>
+    <section aria-labelledby="metodologia">
+        <h2 id="metodologia">Metodologia</h2>
+        <ol class="about-grid about-method" role="list">
+            <li class="card">
+                <span class="step-n" aria-hidden="true">1</span>
+                <h3>Perfil e indicadores</h3>
+                <p>
+                    O perfil fornece os dados para calcular o índice de massa corporal (IMC) e estimar o
+                    gasto em repouso pela equação de Mifflin–St Jeor, apresentada no plano como taxa metabólica basal (TMB).
+                </p>
+                <ul class="formulas">
+                    <li><strong>IMC</strong> = peso em kg ÷ altura em metros ao quadrado</li>
+                    <li><strong>TMB para homens</strong> = 10 × peso + 6,25 × altura − 5 × idade + 5</li>
+                    <li><strong>TMB para mulheres</strong> = 10 × peso + 6,25 × altura − 5 × idade − 161</li>
+                </ul>
+                <p class="muted">Na equação da TMB, o peso está em kg, a altura em cm e a idade em anos.</p>
+            </li>
+            <li class="card">
+                <span class="step-n" aria-hidden="true">2</span>
+                <h3>Meta de calorias</h3>
+                <p>O gasto diário estimado é a TMB multiplicada pelo fator de atividade, de 1,2 a 1,9.</p>
+                <p>
+                    A meta inicial usa esse gasto como referência. O cálculo subtrai 500 kcal para perda de peso,
+                    soma 500 kcal para ganho e usa o próprio gasto para manutenção.
+                </p>
+                <p class="muted">O NutriPlan aplica pisos de 1.500 kcal/dia para homens e 1.200 kcal/dia para mulheres.</p>
+            </li>
+            <li class="card">
+                <span class="step-n" aria-hidden="true">3</span>
+                <h3>Cardápio semanal</h3>
+                <p>
+                    A meta diária é distribuída em quatro refeições por dia, durante sete dias.
+                    São 25% no café da manhã, 35% no almoço, 15% no lanche e 25% no jantar.
+                </p>
+                <p>
+                    O sistema usa a combinação C(n, k) = n! ÷ (k! × (n − k)!) para selecionar de 2 a 6 alimentos
+                    da base local. As opções seguem regras de grupos por refeição e as porções são ajustadas
+                    para se aproximar da meta de calorias. O sistema prioriza combinações diferentes quando há alternativas.
+                </p>
+            </li>
+            <li class="card">
+                <span class="step-n" aria-hidden="true">4</span>
+                <h3>Acompanhamento de peso</h3>
+                <p>
+                    Cada registro é comparado ao peso anterior. A meta configurável de perda ou ganho vai de
+                    0,1 a 1 kg por semana. Para manutenção, o sistema considera uma variação de até 0,5 kg.
+                </p>
+                <p>
+                    O histórico mostra se a meta foi cumprida, e o sistema concede emblemas pelas metas alcançadas.
+                    Em perda ou ganho, resultados consecutivos fora da meta podem levar a ajustes no cálculo das calorias.
+                </p>
+            </li>
+        </ol>
+    </section>
 
-    <article class="card">
-        <h2>Equipe</h2>
-        <table class="table">
-            <thead><tr><th>Nome</th><th>RA</th></tr></thead>
-            <tbody>
-                @foreach (var member in Model.Team.Members)
-                {
-                    <tr><td>@member.Name</td><td>@member.Ra</td></tr>
-                }
-            </tbody>
-        </table>
-        <p class="muted">Professor: @Model.Team.Professor</p>
-    </article>
+    <section aria-labelledby="ods">
+        <h2 id="ods">Objetivos de Desenvolvimento Sustentável (ODS)</h2>
+        <div class="about-grid">
+            <article class="card">
+                <p class="eyebrow">Objetivo principal</p>
+                <h3>ODS 3 · Saúde e Bem-Estar</h3>
+                <p>
+                    O planejamento de refeições e o registro de peso servem para explorar, em um contexto educacional,
+                    como porções e metas calóricas se relacionam com os hábitos alimentares.
+                </p>
+                <a href="https://brasil.un.org/pt-br/sdgs/3">Conheça o ODS 3 na ONU Brasil</a>
+            </article>
+            <article class="card">
+                <p class="eyebrow">Objetivo secundário</p>
+                <h3>ODS 2 · Fome Zero e Agricultura Sustentável</h3>
+                <p>
+                    O ODS 2 inclui a melhoria da nutrição. O projeto se aproxima desse tema ao reunir
+                    informações sobre alimentos comuns no Brasil, com valores aproximados da TACO.
+                </p>
+                <a href="https://brasil.un.org/pt-br/sdgs/2">Conheça o ODS 2 na ONU Brasil</a>
+            </article>
+        </div>
+    </section>
 
-    <article class="card">
-        <h2>Boas práticas aplicadas</h2>
+    <section aria-labelledby="fontes">
+        <h2 id="fontes">Fontes e referências</h2>
         <ul>
-            <li>GitFlow (main, develop, feature/*) e commits semânticos</li>
-            <li>Testes unitários escritos com TDD (xUnit)</li>
-            <li>Integração contínua com GitHub Actions</li>
-            <li>Código limpo, validação de entradas e tratamento de erros</li>
-            <li>Banco SQLite e API externa Open Food Facts</li>
+            <li>
+                A base local usa valores aproximados da
+                <a href="https://nepa.unicamp.br/categoria/taco/">Tabela Brasileira de Composição de Alimentos (TACO)</a>,
+                do NEPA/Unicamp.
+            </li>
+            <li>
+                A busca de produtos usa o <a href="https://openfoodfacts.github.io/openfoodfacts-server/api/">Open Food Facts</a>
+                como fonte complementar.
+            </li>
+            <li>
+                A estimativa de gasto em repouso usa a
+                <a href="https://pubmed.ncbi.nlm.nih.gov/2305711/">equação de Mifflin–St Jeor (1990)</a>.
+            </li>
         </ul>
-    </article>
+    </section>
+
+    <div class="about-grid">
+        <section class="card" aria-labelledby="qualidade">
+            <h2 id="qualidade">Boas práticas aplicadas</h2>
+            <ul>
+                <li>Versionamento com GitFlow e commits semânticos.</li>
+                <li>Desenvolvimento orientado por testes (TDD) com xUnit.</li>
+                <li>Verificação de formatação, compilação e testes no GitHub Actions.</li>
+                <li>Regras de negócio separadas da interface, com validação e tratamento de erros.</li>
+                <li>Armazenamento em SQLite e consulta complementar via Open Food Facts.</li>
+            </ul>
+        </section>
+
+        <section class="card about-team" aria-labelledby="equipe">
+            <h2 id="equipe">Equipe</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.Team.Professor))
+            {
+                <p class="muted"><strong>Professor</strong> · @Model.Team.Professor</p>
+            }
+            @if (Model.Team.Members.Count == 0)
+            {
+                <p class="muted">Nenhum integrante foi informado na configuração do projeto.</p>
+            }
+            else
+            {
+                <table class="table">
+                    <caption>Integrantes do projeto</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Nome</th>
+                            <th scope="col">RA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var member in Model.Team.Members)
+                        {
+                            <tr>
+                                <th scope="row">@member.Name</th>
+                                <td>@member.Ra</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    </div>
 </div>

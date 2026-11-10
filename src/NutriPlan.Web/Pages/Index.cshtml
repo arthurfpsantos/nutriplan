@@ -1,36 +1,41 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Planejador de dieta";
+    ViewData["Title"] = Model.Errors.Count > 0 || Model.Notice is not null
+        ? "Erro ao gerar o plano"
+        : "Planejador de dieta";
 }
 
-<section class="hero">
-    <div>
+<section class="hero" aria-labelledby="page-title">
+    <header>
         <p class="eyebrow">Saúde e bem-estar · ODS 3</p>
-        <h1>Sua meta de calorias e um cardápio de 7 dias, feitos para o seu corpo.</h1>
+        <h1 id="page-title">Calcule sua meta de calorias e monte um cardápio de 7 dias</h1>
         <p class="lead">
             Informe peso, altura, idade e objetivo. O NutriPlan calcula IMC, taxa metabólica e gasto diário,
             define sua meta de calorias e monta um cardápio semanal variado com análise combinatória.
         </p>
         <ul class="ticks">
             <li>Déficit para emagrecer, superávit para ganhar peso</li>
-            <li>4 refeições por dia, sem repetir o prato do dia anterior</li>
+            <li>4 refeições por dia, priorizando combinações novas na semana e evitando repetir as do dia anterior quando há alternativas</li>
             <li>Metas semanais, conquistas e ajuste automático do plano</li>
         </ul>
-    </div>
+    </header>
 
-    <form method="post" class="card form-card" novalidate>
-        <h2>Seu perfil</h2>
+    <form method="post" class="card form-card profile-form" aria-labelledby="profile-title" novalidate>
+        <h2 id="profile-title">Seu perfil</h2>
+        <p class="hint">Todos os campos são obrigatórios.</p>
 
         @if (Model.Notice is not null)
         {
-            <div class="alert alert-error">@Model.Notice</div>
+            <div class="alert alert-error" role="alert">@Model.Notice</div>
         }
 
         @if (Model.Errors.Count > 0)
         {
-            <div class="alert alert-error" role="alert">
-                <ul>
+            <div class="alert alert-error" role="group" aria-labelledby="profile-errors"
+                 aria-describedby="profile-error-list" tabindex="-1" autofocus>
+                <h3 id="profile-errors">Não foi possível gerar seu plano</h3>
+                <ul id="profile-error-list">
                     @foreach (var error in Model.Errors)
                     {
                         <li>@error</li>
@@ -39,65 +44,110 @@
             </div>
         }
 
-        <label>Nome
-            <input asp-for="Input.Name" autocomplete="name" placeholder="Como devemos te chamar?" />
-        </label>
+        <fieldset>
+            <legend>Dados pessoais</legend>
 
-        <div class="grid-2">
-            <label>Sexo
-                <select asp-for="Input.Sex">
-                    <option value="@Sex.Male">@UiText.Label(Sex.Male)</option>
-                    <option value="@Sex.Female">@UiText.Label(Sex.Female)</option>
-                </select>
-            </label>
-            <label>Idade (anos)
-                <input asp-for="Input.Age" type="number" min="18" max="100" step="1" />
-            </label>
-        </div>
+            <div class="profile-field">
+                <label asp-for="Input.Name">Nome</label>
+                <input asp-for="Input.Name" autocomplete="name" required />
+            </div>
 
-        <div class="grid-2">
-            <label>Peso (kg)
-                <input asp-for="Input.WeightKg" type="number" min="30" max="400" step="0.1" />
-            </label>
-            <label>Altura (cm)
-                <input asp-for="Input.HeightCm" type="number" min="100" max="250" step="1" />
-            </label>
-        </div>
+            <div class="grid-2">
+                <div class="profile-field">
+                    <label asp-for="Input.Sex">Sexo</label>
+                    <select asp-for="Input.Sex" aria-describedby="profile-sex-hint" required>
+                        <option value="@Sex.Male">@UiText.Label(Sex.Male)</option>
+                        <option value="@Sex.Female">@UiText.Label(Sex.Female)</option>
+                    </select>
+                    <p class="hint" id="profile-sex-hint">Usado no cálculo da taxa metabólica.</p>
+                </div>
+                <div class="profile-field">
+                    <label asp-for="Input.Age">Idade (anos)</label>
+                    <input asp-for="Input.Age" type="number" min="18" max="100" step="1"
+                           aria-describedby="profile-age-hint" required />
+                    <p class="hint" id="profile-age-hint">De 18 a 100 anos.</p>
+                </div>
+            </div>
 
-        <label>Nível de atividade física
-            <select asp-for="Input.Activity">
-                @foreach (var level in Enum.GetValues<ActivityLevel>())
-                {
-                    <option value="@level">@UiText.Label(level)</option>
-                }
-            </select>
-        </label>
+            <div class="grid-2">
+                <div class="profile-field">
+                    <label asp-for="Input.WeightKg">Peso (kg)</label>
+                    <input asp-for="Input.WeightKg" type="number" min="30" max="400" step="0.1"
+                           aria-describedby="profile-weight-hint" required />
+                    <p class="hint" id="profile-weight-hint">De 30 a 400 kg.</p>
+                </div>
+                <div class="profile-field">
+                    <label asp-for="Input.HeightCm">Altura (cm)</label>
+                    <input asp-for="Input.HeightCm" type="number" min="100" max="250" step="1"
+                           aria-describedby="profile-height-hint" required />
+                    <p class="hint" id="profile-height-hint">De 100 a 250 cm.</p>
+                </div>
+            </div>
+        </fieldset>
 
-        <div class="grid-2">
-            <label>Objetivo
-                <select asp-for="Input.Goal">
-                    @foreach (var goal in Enum.GetValues<Goal>())
+        <fieldset>
+            <legend>Atividade e objetivo</legend>
+
+            <div class="profile-field">
+                <label asp-for="Input.Activity">Nível de atividade física</label>
+                <select asp-for="Input.Activity" aria-describedby="profile-activity-hint" required>
+                    @foreach (var level in Enum.GetValues<ActivityLevel>())
                     {
-                        <option value="@goal">@UiText.Label(goal)</option>
+                        <option value="@level">@UiText.Label(level)</option>
                     }
                 </select>
-            </label>
-            <label>Meta semanal (kg)
-                <input asp-for="Input.WeeklyGoalKg" type="number" min="0.1" max="1" step="0.1" />
-            </label>
-        </div>
+                <p class="hint" id="profile-activity-hint">Escolha a opção mais próxima da sua rotina.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="profile-field">
+                    <label asp-for="Input.Goal">Objetivo</label>
+                    <select asp-for="Input.Goal" required>
+                        @foreach (var goal in Enum.GetValues<Goal>())
+                        {
+                            <option value="@goal">@UiText.Label(goal)</option>
+                        }
+                    </select>
+                </div>
+                <div class="profile-field">
+                    <label asp-for="Input.WeeklyGoalKg">Meta semanal (kg)</label>
+                    <input asp-for="Input.WeeklyGoalKg" type="number" min="0.1" max="1" step="0.1"
+                           aria-describedby="profile-weekly-goal-hint" required />
+                    <p class="hint" id="profile-weekly-goal-hint">De 0,1 a 1 kg por semana.</p>
+                </div>
+            </div>
+        </fieldset>
 
         <div class="actions">
             <button type="submit" class="btn">Gerar meu plano</button>
             <a class="btn btn-ghost" asp-page="/Index" asp-route-example="true">Preencher exemplo</a>
         </div>
-        <p class="hint">Somente maiores de 18 anos. Por segurança, o plano nunca fica abaixo de 1.500 kcal (homens) ou 1.200 kcal (mulheres).</p>
+        <p class="hint">O plano respeita o mínimo diário de 1.500 kcal para homens e 1.200 kcal para mulheres.</p>
     </form>
 </section>
 
-<section class="steps">
-    <article class="card"><span class="step-n">1</span><h3>Dados</h3><p>Formulário com perfil e objetivo.</p></article>
-    <article class="card"><span class="step-n">2</span><h3>Cálculos</h3><p>IMC, TMB (Mifflin-St Jeor), gasto diário e meta.</p></article>
-    <article class="card"><span class="step-n">3</span><h3>Cardápio</h3><p>Combinações de alimentos para cada refeição.</p></article>
-    <article class="card"><span class="step-n">4</span><h3>Acompanhamento</h3><p>Peso semanal, metas e emblemas.</p></article>
+<section aria-labelledby="steps-title">
+    <h2 id="steps-title">Como o NutriPlan funciona</h2>
+    <ol class="steps profile-steps" role="list">
+        <li class="card">
+            <span class="step-n" aria-hidden="true">1</span>
+            <h3>Dados</h3>
+            <p>Preencha o perfil e escolha seu objetivo.</p>
+        </li>
+        <li class="card">
+            <span class="step-n" aria-hidden="true">2</span>
+            <h3>Cálculos</h3>
+            <p>Veja seu IMC, sua taxa metabólica, seu gasto diário e sua meta de calorias.</p>
+        </li>
+        <li class="card">
+            <span class="step-n" aria-hidden="true">3</span>
+            <h3>Cardápio</h3>
+            <p>Receba combinações de alimentos para cada refeição.</p>
+        </li>
+        <li class="card">
+            <span class="step-n" aria-hidden="true">4</span>
+            <h3>Acompanhamento</h3>
+            <p>Registre seu peso semanal e acompanhe metas e emblemas.</p>
+        </li>
+    </ol>
 </section>

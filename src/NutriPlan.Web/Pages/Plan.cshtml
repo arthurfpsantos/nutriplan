@@ -10,68 +10,95 @@
     };
 }
 
-<section class="page-head">
-    <div>
-        <p class="eyebrow">@UiText.Label(Model.Profile.Goal) · meta semanal de @UiText.Number(Model.Profile.WeeklyGoalKg, 1) kg</p>
-        <h1>Plano de @(string.IsNullOrWhiteSpace(Model.Profile.Name) ? "você" : Model.Profile.Name)</h1>
-    </div>
-    <form method="post" asp-page-handler="Regenerate" asp-route-id="@Model.Profile.Id">
-        <button class="btn btn-ghost" type="submit">Gerar novo cardápio</button>
-    </form>
-</section>
+<header class="plan-heading">
+    <p class="eyebrow">@UiText.Label(Model.Profile.Goal) · meta semanal de @UiText.Number(Model.Profile.WeeklyGoalKg, 1) kg</p>
+    <h1>Plano de @(string.IsNullOrWhiteSpace(Model.Profile.Name) ? "você" : Model.Profile.Name)</h1>
+</header>
 
 @if (Model.Message is not null)
 {
-    <div class="alert alert-@(Model.MessageKind ?? "info")" role="status">@Model.Message</div>
+    <div class="alert alert-@(Model.MessageKind ?? "info") plan-feedback"
+         role="@(Model.MessageKind == "error" ? "alert" : "status")"
+         aria-labelledby="plan-feedback-text" tabindex="-1" autofocus>
+        <span id="plan-feedback-text">@Model.Message</span>
+    </div>
 }
 
-<section class="stats">
-    <article class="card stat">
-        <span class="stat-label">IMC</span>
-        <strong>@UiText.Number(Model.Imc, 1)</strong>
-        <span class="stat-note">@Model.ImcClass</span>
-    </article>
-    <article class="card stat">
-        <span class="stat-label">TMB</span>
-        <strong>@UiText.Number(Model.Tmb)</strong>
-        <span class="stat-note">kcal · Mifflin-St Jeor</span>
-    </article>
-    <article class="card stat">
-        <span class="stat-label">Gasto diário</span>
-        <strong>@UiText.Number(Model.Energy)</strong>
-        <span class="stat-note">kcal · TMB × @UiText.Number(NutriPlan.Core.Calculations.BodyCalculator.ActivityFactor(Model.Profile.Activity), 3)</span>
-    </article>
-    <article class="card stat stat-main">
-        <span class="stat-label">Meta diária</span>
-        <strong>@UiText.Number(Model.Target)</strong>
-        <span class="stat-note">kcal · @goalText@(Model.Profile.ExtraAdjustmentKcal > 0 ? $" + {Model.Profile.ExtraAdjustmentKcal} kcal de ajuste" : "")</span>
-    </article>
+<nav class="plan-links" aria-label="Seções do plano">
+    <a href="#cardapio">Ver cardápio</a>
+    <a href="#acompanhamento">Acompanhar peso</a>
+</nav>
+
+<section aria-labelledby="indicadores">
+    <h2 id="indicadores">Indicadores do plano</h2>
+    <dl class="stats">
+        <div class="card stat">
+            <dt class="stat-label">Índice de massa corporal (IMC)</dt>
+            <dd>
+                <strong>@UiText.Number(Model.Imc, 1)</strong>
+                <span class="stat-note">@Model.ImcClass</span>
+            </dd>
+        </div>
+        <div class="card stat">
+            <dt class="stat-label">Taxa metabólica basal (TMB)</dt>
+            <dd>
+                <strong>@UiText.Number(Model.Tmb) <small class="stat-unit">kcal/dia</small></strong>
+                <span class="stat-note">Equação de Mifflin-St Jeor</span>
+            </dd>
+        </div>
+        <div class="card stat">
+            <dt class="stat-label">Gasto diário</dt>
+            <dd>
+                <strong>@UiText.Number(Model.Energy) <small class="stat-unit">kcal/dia</small></strong>
+                <span class="stat-note">TMB × @UiText.Number(NutriPlan.Core.Calculations.BodyCalculator.ActivityFactor(Model.Profile.Activity), 3)</span>
+            </dd>
+        </div>
+        <div class="card stat stat-main">
+            <dt class="stat-label">Meta diária</dt>
+            <dd>
+                <strong>@UiText.Number(Model.Target) <small class="stat-unit">kcal/dia</small></strong>
+                <span class="stat-note">@goalText@(Model.Profile.ExtraAdjustmentKcal > 0 ? $" + {Model.Profile.ExtraAdjustmentKcal} kcal de ajuste" : "")</span>
+            </dd>
+        </div>
+    </dl>
+
+    @if (Model.FloorApplied)
+    {
+        <div class="alert alert-info">Por segurança, a meta foi mantida no piso mínimo de @UiText.Number(Model.Target) kcal.</div>
+    }
 </section>
 
-@if (Model.FloorApplied)
-{
-    <div class="alert alert-info">Por segurança, a meta foi mantida no piso mínimo de @UiText.Number(Model.Target) kcal.</div>
-}
+<section aria-labelledby="cardapio">
+    <div class="page-head">
+        <h2 id="cardapio" class="plan-jump-target" tabindex="-1">Cardápio da semana</h2>
+        <form method="post" asp-page-handler="Regenerate" asp-route-id="@Model.Profile.Id">
+            <button class="btn btn-ghost" type="submit">Gerar novo cardápio</button>
+        </form>
+    </div>
+    <p class="muted">Quatro refeições por dia. A meta de calorias se divide em 25% no café da manhã, 35% no almoço, 15% no lanche e 25% no jantar.</p>
 
-<section>
-    <h2>Cardápio da semana</h2>
-    <p class="muted">Quatro refeições por dia: 25% no café, 35% no almoço, 15% no lanche e 25% no jantar.</p>
+    <nav class="plan-links" aria-label="Dias do cardápio">
+        @foreach (var day in Model.Plan.Days)
+        {
+            <a href="#dia-@day.Day">@UiText.WeekDay(day.Day)</a>
+        }
+    </nav>
     <div class="days">
         @foreach (var day in Model.Plan.Days)
         {
-            <article class="card day">
+            <article class="card day" aria-labelledby="dia-@day.Day">
                 <header>
-                    <h3>@UiText.WeekDay(day.Day)</h3>
-                    <span class="pill">@UiText.Number(day.TotalKcal) kcal</span>
+                    <h3 id="dia-@day.Day" class="plan-jump-target" tabindex="-1">@UiText.WeekDay(day.Day)</h3>
+                    <span class="pill">Total: @UiText.Number(day.TotalKcal) kcal</span>
                 </header>
                 @foreach (var meal in day.Meals)
                 {
                     <div class="meal">
                         <div class="meal-head">
-                            <strong>@UiText.Label(meal.Type)</strong>
+                            <h4>@UiText.Label(meal.Type)</h4>
                             <span class="muted">@UiText.Number(meal.TotalKcal) kcal</span>
                         </div>
-                        <ul>
+                        <ul role="list">
                             @foreach (var item in meal.Items)
                             {
                                 <li>
@@ -87,53 +114,74 @@
     </div>
 </section>
 
-<section class="progress">
-    <div class="card">
-        <h2>Registrar peso da semana @Model.NextWeek</h2>
-        <p class="muted">Peso atual: @UiText.Number(Model.Profile.WeightKg, 1) kg. Ao registrar, comparamos com a meta semanal e ajustamos o plano.</p>
-        <form method="post" asp-page-handler="Weight" asp-route-id="@Model.Profile.Id" class="inline-form">
-            <label>Peso (kg)
-                <input name="weight" type="number" min="30" max="400" step="0.1" required />
-            </label>
-            <button class="btn" type="submit">Registrar</button>
-        </form>
+<section aria-labelledby="acompanhamento">
+    <h2 id="acompanhamento" class="plan-jump-target" tabindex="-1">Acompanhamento de peso</h2>
+    <div class="progress">
+        <div class="card">
+            <h3 id="registro-peso">Registrar peso da semana @Model.NextWeek</h3>
+            <p class="muted">Peso atual: <strong>@UiText.Number(Model.Profile.WeightKg, 1) kg</strong>. O registro atualiza seu histórico e o plano.</p>
+            <form method="post" asp-page-handler="Weight" asp-route-id="@Model.Profile.Id"
+                  class="inline-form" aria-labelledby="registro-peso">
+                <div class="weight-field">
+                    <label for="peso-semanal">Peso (kg)</label>
+                    <input id="peso-semanal" name="weight" type="number" min="30" max="400" step="0.1"
+                           inputmode="decimal" aria-describedby="peso-ajuda" required />
+                </div>
+                <button class="btn" type="submit">Registrar peso</button>
+            </form>
+            <p class="hint" id="peso-ajuda">De 30 a 400 kg.</p>
 
-        @if (Model.Weights.Count > 0)
-        {
-            <table class="table">
-                <thead><tr><th>Semana</th><th>Peso</th><th>Data</th><th>Meta</th></tr></thead>
-                <tbody>
-                    @foreach (var entry in Model.Weights.Reverse())
+            @if (Model.Weights.Count == 0)
+            {
+                <p class="muted weight-history">Seu histórico aparece aqui após o primeiro registro de peso.</p>
+            }
+            else
+            {
+                <div class="table-wrap weight-history" role="region" aria-labelledby="historico-peso" tabindex="0">
+                    <table class="table">
+                        <caption id="historico-peso">Histórico de peso</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Semana</th>
+                                <th scope="col">Peso</th>
+                                <th scope="col">Data</th>
+                                <th scope="col">Meta</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var entry in Model.Weights.Reverse())
+                            {
+                                <tr>
+                                    <th scope="row">@entry.Week</th>
+                                    <td>@UiText.Number(entry.WeightKg, 1) kg</td>
+                                    <td>@UiText.Date(entry.RecordedAt)</td>
+                                    <td>@(entry.GoalMet ? "Cumprida" : "Não cumprida")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+        <div class="card">
+            <h3>Conquistas</h3>
+            @if (Model.Achievements.Count == 0)
+            {
+                <p class="muted">Cumpra a meta semanal de peso para ganhar seu primeiro emblema.</p>
+            }
+            else
+            {
+                <ul class="badges" role="list">
+                    @foreach (var achievement in Model.Achievements)
                     {
-                        <tr>
-                            <td>@entry.Week</td>
-                            <td>@UiText.Number(entry.WeightKg, 1) kg</td>
-                            <td>@UiText.Date(entry.RecordedAt)</td>
-                            <td>@(entry.GoalMet ? "Cumprida" : "Não cumprida")</td>
-                        </tr>
+                        <li class="badge">
+                            <strong>@achievement.Title</strong>
+                            <span class="muted">@achievement.Description</span>
+                        </li>
                     }
-                </tbody>
-            </table>
-        }
-    </div>
-
-    <div class="card">
-        <h2>Conquistas</h2>
-        @if (Model.Achievements.Count == 0)
-        {
-            <p class="muted">Cumpra a meta semanal de peso para ganhar seu primeiro emblema.</p>
-        }
-        else
-        {
-            <ul class="badges">
-                @foreach (var achievement in Model.Achievements)
-                {
-                    <li class="badge">
-                        <strong>@achievement.Title</strong>
-                        <span class="muted">@achievement.Description</span>
-                    </li>
-                }
-            </ul>
-        }
+                </ul>
+            }
+        </div>
     </div>
 </section>

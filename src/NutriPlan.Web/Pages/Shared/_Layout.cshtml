@@ -6,19 +6,25 @@
     <title>@ViewData["Title"] · NutriPlan</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
+@{
+    var currentPage = ViewContext.RouteData.Values["page"] as string;
+}
 <body>
+    <a class="skip-link" href="#conteudo-principal">Pular para o conteúdo principal</a>
     <header class="site-header">
         <div class="container header-inner">
-            <a class="brand" asp-page="/Index"><span class="brand-mark">N</span> NutriPlan</a>
-            <nav class="nav">
-                <a asp-page="/Index">Começar</a>
-                <a asp-page="/Foods">Alimentos</a>
-                <a asp-page="/About">Sobre</a>
+            <a class="brand" asp-page="/Index"><span class="brand-mark" aria-hidden="true">N</span> NutriPlan</a>
+            <nav class="nav" aria-label="Principal">
+                <ul role="list">
+                    <li><a asp-page="/Index" aria-current="@(currentPage == "/Index" ? "page" : null)">Começar</a></li>
+                    <li><a asp-page="/Foods" aria-current="@(currentPage == "/Foods" ? "page" : null)">Alimentos</a></li>
+                    <li><a asp-page="/About" aria-current="@(currentPage == "/About" ? "page" : null)">Sobre</a></li>
+                </ul>
             </nav>
         </div>
     </header>
 
-    <main class="container">
+    <main id="conteudo-principal" class="container" tabindex="-1">
         @RenderBody()
     </main>
 

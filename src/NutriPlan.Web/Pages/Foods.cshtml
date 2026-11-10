@@ -2,80 +2,120 @@
 @model FoodsModel
 @{
     ViewData["Title"] = "Alimentos";
+    var hasSearch = Model.External is not null;
 }
 
-<section class="page-head">
-    <div>
-        <p class="eyebrow">Base local (TACO) + Open Food Facts</p>
-        <h1>Consulta de alimentos</h1>
-    </div>
-</section>
+<header>
+    <h1>Consulta de alimentos</h1>
+    <p class="lead">Consulte as calorias dos alimentos da base local, com valores aproximados da TACO, e dos produtos do Open Food Facts.</p>
+</header>
 
-<form method="get" class="card search">
-    <label>Buscar por nome
-        <input asp-for="Q" placeholder="Ex.: arroz, banana, frango" />
-    </label>
-    <button class="btn" type="submit">Buscar</button>
+<form method="get" asp-page="/Foods" class="card search" role="search" aria-label="Buscar alimentos">
+    <label asp-for="Q">Buscar por nome</label>
+    <div class="food-search-controls">
+        <input asp-for="Q" type="search" enterkeyhint="search" aria-describedby="food-search-hint" />
+        <div class="actions">
+            <button class="btn" type="submit">Buscar</button>
+            @if (hasSearch)
+            {
+                <a class="btn btn-ghost" asp-page="/Foods">Limpar busca</a>
+            }
+        </div>
+    </div>
+    <p class="hint" id="food-search-hint">Digite um nome, como arroz. Com o campo vazio, a página mostra toda a base local.</p>
 </form>
 
-@if (Model.Error is not null)
-{
-    <div class="alert alert-error">@Model.Error</div>
-}
+<section aria-labelledby="food-results-title">
+    <h2 id="food-results-title" class="food-results-title" tabindex="-1" autofocus="@hasSearch">
+        @(hasSearch ? $"Resultados para “{Model.Q?.Trim()}”" : "Catálogo de alimentos")
+    </h2>
 
-<section>
-    <h2>Base local <span class="muted">(@Model.LocalFoods.Count)</span></h2>
-    @if (Model.LocalFoods.Count == 0)
-    {
-        <p class="muted">Nenhum alimento encontrado na base local.</p>
-    }
-    else
-    {
-        <div class="card table-wrap">
-            <table class="table">
-                <thead><tr><th>Alimento</th><th>Grupo</th><th>Porção</th><th>kcal/porção</th><th>kcal/100 g</th></tr></thead>
-                <tbody>
-                    @foreach (var food in Model.LocalFoods)
-                    {
-                        <tr>
-                            <td>@food.Name</td>
-                            <td>@UiText.Label(food.Role)</td>
-                            <td>@UiText.Number(food.PortionGrams) g</td>
-                            <td>@UiText.Number(food.KcalPerPortion)</td>
-                            <td>@UiText.Number(food.KcalPer100g)</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-</section>
-
-@if (Model.External is not null)
-{
-    <section>
-        <h2>Open Food Facts</h2>
-        @if (!Model.External.Succeeded)
+    <section aria-labelledby="food-local-title">
+        <h3 id="food-local-title">Base local (TACO)</h3>
+        @if (Model.Error is not null)
         {
-            <div class="alert alert-info">@Model.External.Error A base local continua disponível.</div>
+            <div class="alert alert-error" role="alert">@Model.Error</div>
         }
-        else if (Model.External.Foods.Count == 0)
+        else if (Model.LocalFoods.Count == 0)
         {
-            <p class="muted">Nenhum produto com calorias encontrado.</p>
+            <p class="muted">Nenhum alimento encontrado na base local. Tente outro nome ou limpe a busca para ver o catálogo.</p>
         }
         else
         {
-            <div class="card table-wrap">
+            <p class="muted">@Model.LocalFoods.Count @(Model.LocalFoods.Count == 1 ? "alimento" : "alimentos")</p>
+            <p class="hint food-table-hint">Role a tabela na horizontal para ver todas as colunas.</p>
+            <div class="card table-wrap food-table food-table-local"
+                 role="region" aria-labelledby="food-local-caption" tabindex="0">
                 <table class="table">
-                    <thead><tr><th>Produto</th><th>kcal/100 g</th></tr></thead>
+                    <caption id="food-local-caption">Calorias dos alimentos da base local</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Alimento</th>
+                            <th scope="col">Grupo</th>
+                            <th scope="col" class="food-number">Porção (g)</th>
+                            <th scope="col" class="food-number">kcal por porção</th>
+                            <th scope="col" class="food-number">kcal por 100 g</th>
+                        </tr>
+                    </thead>
                     <tbody>
-                        @foreach (var food in Model.External.Foods)
+                        @foreach (var food in Model.LocalFoods)
                         {
-                            <tr><td>@food.Name</td><td>@UiText.Number(food.KcalPer100g)</td></tr>
+                            <tr>
+                                <th scope="row">@food.Name</th>
+                                <td>@UiText.Label(food.Role)</td>
+                                <td class="food-number">@UiText.Number(food.PortionGrams) g</td>
+                                <td class="food-number">@UiText.Number(food.KcalPerPortion)</td>
+                                <td class="food-number">@UiText.Number(food.KcalPer100g)</td>
+                            </tr>
                         }
                     </tbody>
                 </table>
             </div>
         }
     </section>
-}
+
+    @if (Model.External is not null)
+    {
+        <section class="food-external" aria-labelledby="food-external-title">
+            <h3 id="food-external-title">Open Food Facts</h3>
+            @if (!Model.External.Succeeded)
+            {
+                <div class="alert alert-info" role="status">
+                    @Model.External.Error
+                    @if (Model.Error is null)
+                    {
+                        <span>A base local continua disponível.</span>
+                    }
+                </div>
+            }
+            else if (Model.External.Foods.Count == 0)
+            {
+                <p class="muted">Nenhum produto com calorias encontrado.</p>
+            }
+            else
+            {
+                <p class="muted">@Model.External.Foods.Count @(Model.External.Foods.Count == 1 ? "produto" : "produtos")</p>
+                <div class="card table-wrap food-table" role="region" aria-labelledby="food-external-caption" tabindex="0">
+                    <table class="table">
+                        <caption id="food-external-caption">Calorias dos produtos do Open Food Facts</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Produto</th>
+                                <th scope="col" class="food-number">kcal por 100 g</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var food in Model.External.Foods)
+                            {
+                                <tr>
+                                    <th scope="row">@food.Name</th>
+                                    <td class="food-number">@UiText.Number(food.KcalPer100g)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    }
+</section>
